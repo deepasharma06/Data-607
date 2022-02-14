@@ -1,0 +1,80 @@
+---
+title: "Data607HW2"
+author: "Deepa"
+date: "2/12/2022"
+output: html_document
+---
+
+## Collected data by using Surveymonkey but then modified again over the phone and finalize my data
+manually.
+
+Link:https://www.surveymonkey.com/results/SM-SJ9RWWNJ9/
+
+Githublink for data:
+https://github.com/deepasharma06/Data-607/upload/main
+
+
+
+
+```{r}
+## install.packages("DBI")
+## install.packages("RODBC")
+## install.packages("odbc")
+
+library(DBI)
+library(RODBC)
+library(odbc)
+con <- dbConnect(odbc::odbc(), "PostgreSQL30")
+```
+
+## movies table
+
+```{r}
+dbGetQuery(con, 'SELECT * FROM "postgres"."tb"."movies"')
+
+```
+##respondents table
+
+```{r}
+dbGetQuery(con, 'SELECT * FROM "postgres"."tb"."respondents"')
+
+```
+
+##rating table
+
+```{r}
+dbGetQuery(con, 'SELECT * FROM "postgres"."tb"."ratings"')
+
+```
+
+##weightedscore table
+
+
+```{r}
+dbGetQuery(con, 'SELECT * FROM "postgres"."tb"."weightedscore"')
+```
+
+## created dataframe for show the hightest rating for movies 
+
+
+```{r}
+library(DBI)
+df <- data.frame(dbGetQuery(con, 'SELECT * FROM "postgres"."tb"."weightedscore"'))
+df
+```
+
+
+```{r}
+library(ggplot2)
+ggplot (df, aes(x=score, y=movies)) + geom_col() +
+      xlab("Weighted Score") + ylab("Movies") +ggtitle("Movie Rankings")
+
+```
+## **Conclusion:
+#### The ratings from 1 to 5 for each movie was converted to a weighted value by multiplying each score received by 10, 8, 6, 4 and 2. This was done because a rating of 1 is better than 2 which is better than 3 etc.
+#### A box plot of the weighted scores of each movie is shown above. As it is seen in the plot as well in the max value, the movie 'SpiderManNoWayHome' got the highest weighted score. However, it is worth noting that the sample size in this case is very low to generalise the result.
+
+
+
+
+

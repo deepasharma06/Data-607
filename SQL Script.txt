@@ -1,0 +1,87 @@
+-- 1. Create a new schema tb.
+CREATE SCHEMA tb;
+
+-- New table 'movies'
+-- 2. Create a new movies table schema tb.
+CREATE TABLE tb.movies
+  (
+     "movieid"   INTEGER NOT NULL,
+     "moviename" CHARACTER varying
+  );
+
+-- 3. Load data into the table from a CSV
+COPY tb.movies FROM 'C:\Program Files\PostgreSQL\14\data\movies.csv' csv
+header;
+
+-- 4. Verify data load into table
+SELECT *
+FROM   tb.movies; 
+
+
+
+
+
+-- New table 'respondents'
+-- 5. Create a new table schema tb.
+CREATE TABLE tb.respondents
+  (
+     "respondentid"   INTEGER NOT NULL,
+     "respondentname" CHARACTER varying
+  );
+
+-- 6. Load data into the table from a CSV
+COPY tb.respondents FROM 'C:\Program Files\PostgreSQL\14\data\respondents.csv' csv
+header;
+
+-- 7. Verify data load into table
+SELECT *
+FROM   tb.respondents; 
+
+
+
+
+
+-- New table 'ratings'
+-- 8. Create a new table schema tb.
+CREATE TABLE tb.ratings
+  (
+     "respondentname"   CHARACTER varying NOT NULL,
+     "AvatarRating" int,
+	 "AvengersEndgameRating"  int,
+	 "TitanicRating"  int,
+	 "StarWarsTheForceAwakensRating" int,
+	 "AvengersInfinityWarRating"  int,
+	 "SpiderManNoWayHomeRating"  int  
+  );
+
+-- 9. Load data into the table from a CSV
+COPY tb.ratings FROM 'C:\Program Files\PostgreSQL\14\data\ratings.csv' csv
+header;
+
+-- 10. Verify data load into ratings table
+SELECT *
+FROM   tb.ratings; 
+
+
+
+
+
+-- 4. Loading the weighted score table
+CREATE TABLE tb.weightedscore
+  (
+     "movies" CHARACTER varying,
+	 "score"  int
+  );
+
+-- 3. Load data into the table from a CSV
+COPY tb.weightedscore FROM 'C:\Program Files\PostgreSQL\14\data\weightedscore.csv' csv
+header;
+
+-- 4. Verify data load into table
+SELECT *
+FROM   tb.weightedscore; 
+
+
+
+
+
