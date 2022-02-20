@@ -1,0 +1,131 @@
+---
+title: "Data607 Assignment 3"
+author: "Deepa"
+date: "2/17/2022"
+output: html_document
+---
+
+
+
+```{r}
+library(tidyverse)
+library(stringr)
+
+```
+
+## Question 1
+Using the 173 majors listed in fivethirtyeight.com’s College Majors dataset [https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/], provide code that identifies the majors that contain either "DATA" or "STATISTICS"
+
+
+ provide code that identifies the majors that contain either "DATA" or "STATISTICS"
+
+```{r}
+collegeMajor <- read.csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/college-majors/majors-list.csv", header = TRUE)
+
+collegeMajor$Major %>% str_subset("DATA|STATISTICS")
+
+```
+
+## Questions 2
+
+Write code that transforms the data below:
+[1] "bell pepper"  "bilberry"     "blackberry"   "blood orange"
+[5] "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"  
+[9] "elderberry"   "lime"         "lychee"       "mulberry"    
+[13] "olive"        "salal berry"
+Into a format like this:
+
+
+```{r}
+vec.text = c('[1] "bell pepper"  "bilberry"     "blackberry"   "blood orange"
+[5] "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"  
+[9] "elderberry"   "lime"         "lychee"       "mulberry"    
+[13] "olive"        "salal berry"')
+```
+
+
+
+```{r}
+vec.text.char = gsub("(\\n\\[\\d+\\])|(^\\[\\d+\\])", "", vec.text)
+vec.text.char = strsplit(vec.text.char, '\\"')
+vec.text.char = unlist(vec.text.char)
+vec.text.char = vec.text.char[grep("[a-z]", vec.text.char)]
+vec.text.char
+```
+
+## Question3: The two exercises below are taken from R for Data Science, 14.3.5.1 in the on-line version:
+
+* Describe, in words, what these expressions will match:
+    + "(.)\\1\\1"
+    + "(.)(.)\\2\\1"
+    + "(..)\1"
+    + "(.).\\1.\\1"
+    + "(.)(.)(.).*\\3\\2\\1"
+
+ 
+## Answer3A: one chracter repeated three times in  a row
+
+
+```{r }
+x1<- "zzz"
+str_detect(x1,"(.)\\1\\1")
+```
+
+## Answer3B: One character appears, followed by a second character twice, followed by first character
+```{r}
+x1<- "peep"
+str_detect(x1,"(.)(.)\\2\\1")
+```
+
+## Answer3C:
+
+Two character repeated one time 
+
+```{r}
+x1<- "soso"
+str_detect(x1,"(..)\\1")
+```
+
+## Answer3D: First character, followed by any character followed by the first character, followed by any character, and then the first character again.
+
+```{r}
+x1<- "gpgeg"
+str_detect(x1,"(.).\\1.\\1")
+```
+
+## Answer3E:
+* The string must have three of any character, with any other characters afterwards as long as it ends with the original 3 backwards.
+  Example
+  + mopepom
+  + moppom
+  + mopecpom
+
+```{r}
+x1<- "moppom"
+str_detect(x1,"(.)(.)(.).*\\3\\2\\1")
+
+```
+
+## Construct regular expressions to match words that:
+
+## 1. Start and end with the same character
+
+```{r}
+str_view("pump", "^(.).*\\1$", match = T)
+```
+
+## 2. Contain a repeated pair of letters (e.g. "church" contains "ch" repeated twice.)
+
+```{r}
+str_view("salsa", "(..).*\\1", match = T)
+```
+
+## 3. Contain one letter repeated in at least three places (e.g. "eleven" contains three "e"s.)
+
+```{r}
+str_view("settlements", "(.).*\\1.*\\1", match = T)
+```
+
+
+
+
