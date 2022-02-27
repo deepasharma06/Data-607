@@ -1,0 +1,175 @@
+---
+title: "Data607Project 1"
+author: "Deepa Sharma"
+date: "2/25/2022"
+output: html_document
+---
+
+
+In this project, you’re given a text file with chess tournament results where the information has some structure. Your 
+job is to create an R Markdown file that generates a .CSV file (that could for example be imported into a SQL database) 
+with the following information for all of the players:
+Player’s Name, Player’s State, Total Number of Points, Player’s Pre-Rating, and Average Pre Chess Rating of Opponents
+For the first player, the information would be:
+Gary Hua, ON, 6.0, 1794, 1605
+1605 was calculated by using the pre-tournament opponents’ ratings of 1436, 1563, 1600, 1610, 1649, 1663, 1716, and 
+dividing by the total number of games played.
+
+## Load tidyverse library
+
+```{r}
+library(tidyverse)
+
+```
+
+## Load the chessGame.txt file
+I loaded text file to my github account and R read line from github.
+
+```{r}
+chessGame <- read_lines("https://raw.githubusercontent.com/deepasharma06/Data-607/main/ChessGame.txt", skip=4)
+head(chessGame)
+
+
+```
+
+## Extract players names
+
+
+```{r}
+pattern_names <- "(?<=\\| )[A-Za-z -]{6,}(?=\\|)"
+names <- str_match_all(chessGame, pattern_names)
+##names
+
+names2 <- str_trim(names[seq(1, length(names), 3)],
+                   side = c("both","left","right"))
+##names2
+head(names2)
+
+```
+
+## Extract player’s States
+
+```{r}
+pattern_states <- "[A-Z]{2}(?=\\s\\|)"
+
+states <- str_match_all(chessGame,pattern_states)
+##states
+states2 <- str_trim(states[seq(2, length(states), 3)],
+                   side = c("both","left","right"))
+##states2
+
+head(states2)
+
+```
+
+## Extract player’s Points
+
+```{r}
+
+pattern_points <- "\\d\\.\\d"
+points <- str_match_all(chessGame,pattern_points)
+points2 <- str_trim(points[seq(1, length(points), 3)],
+                    side = c("both","left","right"))
+head(points2)
+
+```
+
+## Extract Players Rating
+
+```{r}
+
+## Pattern Rating
+
+pattern_rating <- "((?<=R: )|(?<=R:  ))\\d{3,4}"
+rating <- str_match_all(chessGame,pattern_rating)
+#Remove unneeded rows
+rating2 <- rating[seq(2, length(rating), 3)]
+
+#Remove unneeded columns
+rating_temp <- lapply(rating2, function(x) x[,-2])
+
+# This to handle the Unrated people
+rating_temp[lengths(rating_temp) == 0] <- "0000"
+
+# Trim whitespace
+rating2 <- str_trim(rating_temp,side = c("both","left","right"))
+
+# Convert from character to numeric
+rating2 <- unlist(lapply(rating2,as.numeric), recursive = FALSE)
+head(rating2)
+
+```
+
+## Extract Players Played
+
+```{r}
+# This line extract every 3rd row
+MychessGame <- chessGame[seq(1, length(chessGame), 3)]
+
+# This pattern extracts the number that followed a D, W or L"
+pattern_games <- "(((?<=W )|(?<=L ))|(?<=D ))\\s{0,3}\\d{0,2}(?=\\|)"
+
+# Results are stored in this list of lists
+players_played <- str_match_all(MychessGame,pattern_games)
+
+# Lets remove 2 and 3 column, since I won't use them
+players2 <- lapply(players_played, function(x) x[,-c(2:3)])
+
+# Need to trim for whitespace
+players2 <- lapply(players2,str_trim)
+head(players2)
+
+```
+
+
+## Average
+
+
+```{r}
+index_players <- lapply(players2,as.numeric)
+rows_players <- length(index_players)
+player_opponents <- vector(mode = "list", length = rows_players)
+
+for (row in 1:rows_players) {
+  for (col in 1:length(index_players[[row]])) {
+    player_opponents[[row]][col] <- rating2[[index_players[[row]][col]]]
+  }
+}
+
+# Take mean first and then simplify list of vectors into a single vector
+avg_players <- round(unlist(lapply(player_opponents,mean),recursive=FALSE))
+
+head(avg_players)
+
+
+
+```
+
+
+## Create CSV file
+
+```{r}
+Result<- cbind(names2, states2, points2, rating2, avg_players)
+write.csv(Result,"607project1.txt", row.names=FALSE)
+##output
+head(Result)
+
+```
+
+## check the CSV file
+
+```{r}
+check_csv_file <- read.csv("607project1.txt")
+head(check_csv_file)
+```
+
+## Reference:
+Youtube link:https://www.youtube.com/watch?v=uJKpz9T7mAg&t=469s
+
+https://regexone.com/
+
+
+```{r}
+
+```
+
