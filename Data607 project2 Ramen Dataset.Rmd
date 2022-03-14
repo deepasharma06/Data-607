@@ -1,0 +1,113 @@
+---
+title: "Data607Project 2A"
+author: "Deepa"
+date: "3/12/2022"
+output: html_document
+---
+
+
+##### I am using Dataset posted by Benson Yik Seong Toi 
+
+Dataset: The Ramen rater, "THE BIG LIST," 2021
+
+Link: https://www.kaggle.com/residentmario/ramen-ratings
+
+This Dataset is recorded for a ramen product review. Up to date, this data is provided by 2500 reviewers and keeps updating any new ramen in the market.
+
+I will analyze the data to find the following:
+1. Top Ranking Brand
+2. Highest Rated Brand
+3. Top ranking brand by Country
+
+#### Import Library
+
+```{r}
+library(tidyverse)
+library(readr)
+library(curl)
+##install.packages("curl")
+library(ggplot2)
+##install.packages("ggmap")
+library(dplyr)
+library(stringr)
+library("magrittr")
+```
+
+#### Read data from my GitHub and load to a R dataframe
+```{r}
+df<-read.csv("https://raw.githubusercontent.com/deepasharma06/Data-607/main/ramen-ratings%20Dataset%20by%20Benson.csv")
+head(df)
+```
+
+#### This code is to break the Top.Ten column into Year and Ranking
+
+```{r}
+df <- df %>%
+  separate(Top.Ten,into=c("Year","Ranking"),sep=" \\#")
+head(df)
+```
+
+#### Data Tidy: I found that the records where the year was not populated was not clean. There were other fields that were not populated as well such as the ratings. So I conlcuded that these rows needed to be ignored. So I created a different datagrame without these rows where the year is not populated as the data would be meaningless without the year. Before doing that, I converted the Ranking field into integer.
+
+```{r}
+#Find out the data type of all columns in ramen_rating
+sapply(df, class)
+
+# Convert Ranking into integer
+df$Ranking <- as.integer(df$Ranking)
+df$Stars <- as.integer(df$Stars)
+
+# Verify conversion
+sapply(df, class)
+
+```
+
+#### Then I remove data where the year is not populated.
+```{r}
+df$Year[df$Year == ''] = NA
+
+df1 <- na.omit(df) 
+head(df1)
+
+```
+
+#### Analysis:
+1. Top Ranking Brand
+```{r}
+df[which.max(df$Stars ),]
+```
+Tao Kae Noi	brand's Creamy tom Yum Kung Flavour	is the highest rated (6 stars) noodle overall. However, it is interesting that this brand in not in the top ranking.
+
+2. Highest Rated Brand
+```{r}
+df[which.max(df$Ranking ),]
+```
+MAMA Brand Instant Noodles Coconut Milk Flavour	is the highest rated brand with a rating of 10.
+
+3. Average Ranking for any brand by country
+```{r}
+df1 %>%
+    group_by(Country) %>%
+    summarise(avg_rating = round(mean(Ranking),), 
+              count=n()) %>%
+    arrange(desc(avg_rating))
+```
+Myanmar and Tiwan are the two countries with the highest average raking for noodles for any brand.
+
+```{r}
+df1 %>%
+    group_by(Country) %>%
+    ggplot(aes(x=Ranking,y=Country)) +
+    geom_bar(Country = "dodge",
+        stat = "summary",
+        fun = "mean") +
+    ggtitle("Average Rating by Country") + ylab("Country")
+```
+
+#### Conclusion:
+Based on the analysis, Myanmar has the highest average rating for noodles and Indonesia has the lowest. From the table above, it is seen that Singapore has the highest number (7) of rated noodles. USA has only one noodle that is rated. Nongshim brand's "Jinjja Jinjja Flamin' Hot & Nutty" noodle is the only one rated in the USA. It has a star rating of 5 but the ranking is 4/10.
+
+#### References:
+“How to Find the Highest Value of a Column in a Data Frame in R?” Stack Overflow, 13 June 2014, https://stackoverflow.com/questions/24212739/how-to-find-the-highest-value-of-a-column-in-a-data-frame-in-r   
+
+

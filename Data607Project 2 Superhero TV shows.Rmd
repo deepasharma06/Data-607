@@ -1,0 +1,140 @@
+---
+title: "Data607 Project 2C"
+author: "Deepa"
+date: "3/13/2022"
+output: html_document
+---
+
+### This dataset was share by Deepa Sharma for Superhero TV shows
+
+
+1. Data: This is a Kaggle data from superhero TV shows
+
+https://www.kaggle.com/anoopkumarraut/superhero-tv-shows/data
+
+2. Possible Analysis:
+
+ -  What is the highest-rated TV show of all times.
+ -  What is the highest rated TV show from each year in the data set.
+
+#### Import Library
+
+```{r}
+library(tidyverse)
+library(readr)
+library(curl)
+##install.packages("curl")
+library(ggplot2)
+##install.packages("ggmap")
+library(dplyr)
+library(stringr)
+library("magrittr")
+```
+
+
+#### Load data from Github (csv) into R dataframe
+
+```{r}
+df<- read.csv("https://raw.githubusercontent.com/deepasharma06/Data-607/main/Dataset_Superhero-TV-Shows.csv")
+head(df)
+```
+
+#### This is to pull the columns needed for analysis and remove unnecessary columns
+
+```{r}
+library(tidyr)
+df<- df[, c("show_title", "imdb_rating", "release_year", "genre")]
+head(df)
+```
+
+#### This is to truncate the first 4 characters of release_year to get the year instead of a range
+
+```{r}
+df$release_year <- substr(df$release_year,1,4)
+head(df)
+```
+
+#### This code is to replace any rows in imdb_rating column with a value of 'Not_Rated' with NA
+
+```{r}
+df$imdb_rating[df$imdb_rating == 'Not-Rated'] = NA
+head(df)
+```
+
+#### This code is to replace any rows in imdb_rating column with a value of Null with NA
+
+```{r}
+df$imdb_rating[df$imdb_rating == ''] = NA
+head(df)
+```
+
+#### This code is to replace any rows in release_year column with a value of 'TBA' with NA
+
+```{r}
+df$release_year[df$release_year == 'TBA'] = NA
+head(df)
+```
+
+#### This code is to replace all rows with NA
+
+```{r}
+df <- na.omit(df) 
+head(df)
+```
+
+#### This code is to reorder the data in the decreasing order of imdb_rating column
+
+```{r}
+df1 <- df[order(df$imdb_rating, decreasing = TRUE), ] 
+head(df1)
+```
+
+#### We can see from the above table that the TV show 'Avatar: The Last Airbender' is the highest rated show of all times with a rating of 9.3
+
+#### The following code is to reorder the data in the decreasing order of imdb_rating column but also grouping the data by 
+
+```{r}
+
+df2 <- df %>%
+  arrange(desc(imdb_rating)) %>%
+  group_by(release_year) %>%
+  slice(1:1) %>%
+  arrange(desc(release_year))
+head(df2)
+```
+
+
+
+The above table shows the highest rated TV show for each year.
+
+#### Conlcusion:
+Based on the analysis of data we have the following conclusion:
+'Avatar: The Last Airbender' is the highest rated show of all times with a rating of 9.3
+The top rated shows for each year is available in the table above.
+
+
+#### Reference:
+YouTube. (2021, August 6). R select top n highest values by group (example) | extract head | reduce, rbind, dplyr &amp; data.table. YouTube. Retrieved March 13, 2022, from https://www.youtube.com/watch?v=Vhb7cvfRB5k 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

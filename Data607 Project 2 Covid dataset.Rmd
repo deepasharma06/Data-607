@@ -1,0 +1,124 @@
+---
+title: "Data 607 Project 2B"
+author: "Deepa"
+date: "3/12/2022"
+output: html_document
+---
+I am using dataset from Moiya Josephs Moiya Josephs that has all the deaths and cases in the United States from COVID
+
+Possible Analysis:
+
+- Find the state with the highest case in each year
+- Find the state with the highest deaths in each year
+- Find the state with the total COVID deaths
+
+#### Load the library first
+```{r}
+library(tidyverse)
+```
+
+#### Read the raw data from my Github and load to R dataframe
+
+```{r}
+df<-read.csv("https://raw.githubusercontent.com/deepasharma06/Data-607/main/United_States_COVID-19_Cases_and_Deaths_by_State_over_Time.csv", stringsAsFactors = TRUE)
+head(df)
+```
+
+#### This code is to break the date into month, day and year.
+
+```{r}
+library(tidyr)
+df <- tidyr::separate(df, ï..submission_date, c('month', 'day', 'year'), sep = "/",remove = FALSE)
+head(df)
+```
+
+#### This code is to create a new dataframe with the required columns for this analysis. This is part of the process to clean up the data.
+
+```{r}
+df1 <- df[, c("year", "state", "new_case", "new_death")]
+head(df1)
+```
+
+#### This code converts the new_case and new_death columns into numeric and groups the data by year and state
+
+```{r}
+df1$new_case <- as.numeric(df1$new_case)
+df1$new_death <- as.numeric(df1$new_death)
+sapply(df1, class)
+
+df2 <- df1 %>%
+  group_by(year, state) %>%
+  summarise_all(sum)
+df2
+```
+#### This code is to find the unique state in my dataframe and to compare with the actual states in the US. I used the state.abb dataset already existing in R for this compare. From this, I found the list of nonstates in my data
+
+```{r}
+# what are the states in my dataframe?
+dfstate <- unique(df2$state)
+
+# What are the valid states in the US? I am using the state.abb data available in R
+state.abb
+usstate <- state.abb
+
+# What are the nonstates in my dataframe?
+nonstates <- setdiff(dfstate, usstate)
+nonstates
+
+```
+#### This code is to remove the nonstates from my dataframe. I converted the state column into character for this. Then I converted the nonstate values into NA and removed all rows with NA.
+
+```{r}
+
+sapply(df2, class)
+df2$state  <- as.character(df2$state)
+sapply(df2, class)
+
+df2$state[df2$state == 'AS'] = NA
+df2$state[df2$state == 'DC'] = NA
+df2$state[df2$state == 'FSM'] = NA
+df2$state[df2$state == 'GU'] = NA
+df2$state[df2$state == 'MP'] = NA
+df2$state[df2$state == 'NYC'] = NA
+df2$state[df2$state == 'PR'] = NA
+df2$state[df2$state == 'PW'] = NA
+df2$state[df2$state == 'RMI'] = NA
+df2$state[df2$state == 'VI'] = NA
+
+df3 <- na.omit(df2) 
+head(df3)
+
+```
+#### Now the data has been cleaned and ready for analysis.
+#### Analysis:
+Find the state with the highest number of cases in any particular year.
+
+```{r}
+
+df3[which.max(df3$new_case), ]
+
+```
+Find the state with the highest deaths in each year.
+
+From the code below, we see that Alabama has the highest death in 2021. I was surprised to see this and did some research and found that California had the highest COVID death in 2021. My inference is that the data provided in by this source must be wrong.
+
+```{r}
+
+df3[which.max(df3$new_death), ]
+
+```
+
+#### Conclusion:
+From the above analysis, it is seen that untidy data can be cleaned up and analysed using R script. However, the limitation is that if the source data is incorrect, then the result will look skewed.
+
+
+
+
+
+
+
+
+
+
+
+
