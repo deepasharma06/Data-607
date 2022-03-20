@@ -1,0 +1,32 @@
+[
+ {
+   "title": "Matched",
+   "author1": "Ally Condle",
+   "author2": null,
+   "publisher": "Allyson braithwaite Condie",
+   "year": 2010,
+   "isbn": 9780140000000,
+   "pages": 369,
+   "price": 9.99
+ },
+ {
+   "title": "Catching Fire",
+   "author1": "Suzane Collins",
+   "author2": null,
+   "publisher": "Scholastic Press",
+   "year": 2009,
+   "isbn": 9780440000000,
+   "pages": 391,
+   "price": 17.99
+ },
+ {
+   "title": "Data Science for Business",
+   "author1": "Foster Provost",
+   "author2": "Tom Fawcett",
+   "publisher": "O'Reily Media Inc.",
+   "year": 2013,
+   "isbn": 9781450000000,
+   "pages": 386,
+   "price": 49.99
+ }
+]
