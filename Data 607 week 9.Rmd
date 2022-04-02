@@ -1,0 +1,116 @@
+---
+title: "Data 607 week 9"
+author: "Deepa Shama"
+date: "4/1/2022"
+output: html_document
+---
+
+## Week 9 Assignment – Web APIs (30 points)
+Preparing Data (25 points)
+Choose one of the New York Times APIs, request API key (1 point)
+Construct an interface in R to read in the JSON data (14 points)
+Transform data to an R dataframe (10 points)
+
+Reproducibility (2 points)
+Using R Markdown text and headers (2 points)
+Workflow (2 points)
+Included a brief description of the assigned problem.
+Included an overview of your approach. Explained your reasoning.
+Provided a conclusion (including any findings and recommendations).
+Submission (1 points)
+Published to rpubs and provided a link in your assignment submission.
+Published to GitHub and provided a link in your assignment submission
+
+
+## NY Times Web API
+
+## Introduction:
+In this assignment we are ask to choose one of the New York Times APIs, construct an interface in R to read in the JSON data, and transform it into an R Dataframe.To do this I use NYT developer API link  https://developer.nytimes.com/apis and then sign up for my own API key. I selected most popular new York Times article  API for for this assignment.
+Here is MY API Key: xVAwOUxWWObztqjKP4SE1i11AuG1Gb57 
+
+
+* Load Library:
+  - httr:First I will load httr for getting data from API
+  - jsonlite: use for parsing result
+  - dplyr: use for pipe function
+
+```{r}
+library(httr)
+library(jsonlite)
+library(dplyr)
+
+```
+
+
+## Accessing data from web API using GET function
+
+
+```{r}
+my_url<- paste0("https://api.nytimes.com/svc/mostpopular/v2/shared/1/facebook.json?api-key=xVAwOUxWWObztqjKP4SE1i11AuG1Gb57")
+my_raw_result<-httr::GET(my_url)
+str(my_raw_result)
+str(my_raw_result$content)
+```
+
+## Here I use httr as = text to convert raw to usable format with the content function
+
+```{r}
+my_content<-httr::content(my_raw_result, as= 'text')
+str(my_content)
+```
+
+## I used jsonlite package is a JSON to parse the result. Its main strength is that it implements a bidirectional mapping between JSON data and the most important R data types.
+
+```{r}
+my_content_from_json<-jsonlite::fromJSON(my_content)
+dplyr::glimpse(my_content_from_json)
+```
+
+## We will as.data.frame function to pulled data to convert into a dataframe
+
+```{r}
+df_json <- as.data.frame(my_content_from_json)
+View(df_json)
+
+```
+
+ ## I Use colnames function to see all the columns 
+
+```{r}
+colnames(df_json)
+```
+
+## View url for the most viewed articles
+
+```{r}
+df_json %>%
+    select(results.url)
+
+```
+## View results.published_date for the most viewed articles
+
+```{r}
+df_json %>%
+    select(results.published_date)
+
+```
+## View results.section for the most viewed articles
+
+```{r}
+df_json %>%
+    select(results.section)
+
+```
+
+## Conclusion:
+
+This is my first time playing with web API and converting into a dataframe in R. I found GET function is a simpler way to load Web API in R.However, I had some challenges with raw data converting into most usable form of R. Then I use httr as = text to convert raw to usable format with the content function. I used jsonlite package for JSON to parse the result. Its main strength is that it implements a bidirectional mapping between JSON data and the most important R data types.
+
+
+### References:
+ + https://www.youtube.com/watch?v=tlaJf0CHbFE
+ + https://www.youtube.com/watch?v=zc0ayq-c0OM
+ + https://github.com/rstudio/webinars/blob/master/31-Web-APIs/01-APIs.pdf
+
+
+## Thank you!
