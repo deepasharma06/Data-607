@@ -1,0 +1,301 @@
+---
+title: "Week10 607"
+author: "Deepa"
+date: "4/10/2022"
+output:
+ html_document:
+   theme: cerulean
+   toc: true
+   toc_float: true
+
+---
+
+## First part:
+ * #### Textbook Assignment- Run the below code from the Text book:https://www.tidytextmining.com/sentiment.html
+
+```{r}
+library(tidytext)
+library(RCurl)
+library(dplyr)
+library(janeaustenr)
+library(stringr)
+library(textdata)
+library(tidyr)
+library(ggplot2)
+library(rjson)
+library(jsonlite)
+library(httr)
+library(XML)
+library(rvest)
+library(wordcloud)
+library(wordcloud2)
+library(RColorBrewer)
+library(rtweet)
+library(tm)
+
+```
+
+ * #### The below code uses afinn lexicon to get the sentiments.
+ 
+```{r}
+## remove.packages("rlang")
+## install.packages("rlang")
+
+library(tidyverse)
+
+##install.packages("tidytext")
+library(tidytext)
+library(dplyr)
+get_sentiments("afinn")
+
+```
+ * #### The below code uses nrc lexicon to get the sentiments.
+
+```{r}
+get_sentiments("nrc")
+
+```
+ 
+ * #### The below code uses bing lexicon to get the sentiments.
+
+```{r}
+get_sentiments("bing")
+```
+
+
+ * #### Get the code from the text book and keep it working
+
+```{r}
+
+
+library(janeaustenr)
+library(dplyr)
+library(stringr)
+
+tidy_books <- austen_books() %>%
+  group_by(book) %>%
+  mutate(
+    linenumber = row_number(),
+    chapter = cumsum(str_detect(text, 
+                                regex("^chapter [\\divxlc]", 
+                                      ignore_case = TRUE)))) %>%
+  ungroup() %>%
+  unnest_tokens(word, text)
+head(tidy_books, 5) %>% knitr::kable()
+```
+
+ * #### Using sentiment dictionary nrc on te book exercise
+
+
+```{r}
+nrc_joy <- get_sentiments("nrc") %>% 
+  filter(sentiment == "joy")
+
+tidy_books %>%
+  filter(book == "Emma") %>%
+  inner_join(nrc_joy) %>%
+  count(word, sort = TRUE)
+
+```
+
+ * #### Using sentiment dictionary bing on the book exercise
+
+```{r}
+library(tidyr)
+
+jane_austen_sentiment <- tidy_books %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(book, index = linenumber %/% 80, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+  mutate(sentiment = positive - negative)
+
+library(ggplot2)
+
+ggplot(jane_austen_sentiment, aes(index, sentiment, fill = book)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~book, ncol = 2, scales = "free_x")
+```
+
+ * #### Comparing the three sentiment dictionaries
+
+```{r}
+pride_prejudice <- tidy_books %>% 
+  filter(book == "Pride & Prejudice")
+```
+
+ *  Now, we can use inner_join() to calculate the sentiment in different ways.
+Let’s again use integer division (%/%) to define larger sections of text that span multiple lines, and we can use the same pattern with count(), pivot_wider(), and mutate() to find the net sentiment in each of these sections of text.
+
+
+```{r}
+
+afinn <- pride_prejudice %>% 
+  inner_join(get_sentiments("afinn")) %>% 
+  group_by(index = linenumber %/% 80) %>% 
+  summarise(sentiment = sum(value)) %>% 
+  mutate(method = "AFINN")
+
+bing_and_nrc <- bind_rows(
+  pride_prejudice %>% 
+    inner_join(get_sentiments("bing")) %>%
+    mutate(method = "Bing et al."),
+  pride_prejudice %>% 
+    inner_join(get_sentiments("nrc") %>% 
+                 filter(sentiment %in% c("positive", 
+                                         "negative"))
+    ) %>%
+    mutate(method = "NRC")) %>%
+  count(method, index = linenumber %/% 80, sentiment) %>%
+  pivot_wider(names_from = sentiment,
+              values_from = n,
+              values_fill = 0) %>% 
+  mutate(sentiment = positive - negative)
+```
+ * #### This is an analysis by combining the three dictionaries, afinn, bing and nrc.
+
+```{r}
+bind_rows(afinn, 
+          bing_and_nrc) %>%
+  ggplot(aes(index, sentiment, fill = method)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~method, ncol = 1, scales = "free_y")
+```
+ * ####  Visualization using Wordclouds
+
+```{r}
+tidy_books %>%
+  anti_join(stop_words) %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 100))
+```
+
+ * #### Negative vs positive analysis using bing dictionary
+
+```{r}
+library(reshape2)
+
+tidy_books %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("blue", "green"),
+                   max.words = 100)
+```
+
+
+## Second Part:
+
+ *  The below example is where I performed a sentimental analysis of Ukranian president Vladimir Zelinski's address to the United States Congress on March   16, 2022. The text of his address was taken from the Washington post article available at:        https://www.washingtonpost.com/politics/2022/03/16/text-zelensky-address-congress/
+
+```{r}
+speech_website<- read_html("https://www.washingtonpost.com/politics/2022/03/16/text-zelensky-address-congress/")
+speech <- speech_website %>%
+html_nodes("p") %>%
+html_text()
+```
+
+ *  This is to getsentiment using the syuzhet which I thought was good for a political sentimental analysis.
+
+```{r}
+## install.packages("syuzhet")
+library(syuzhet)
+get_sentiment(speech[2:50])
+```
+
+```{r}
+knitr::kable(get_nrc_sentiment(speech[2:50]))
+```
+
+
+```{r}
+s_v <- get_sentences(speech[2:50])
+s_v_sentiment <- get_sentiment(s_v)
+s_v_sentiment
+
+```
+
+
+```{r}
+knitr::kable(get_sentiments("nrc") %>% count(sentiment, sort = TRUE) )
+```
+
+
+```{r}
+tidy_speech <- speech[2:50]
+
+tidy_speech_words <- unlist(as.list(strsplit(tidy_speech, " ")))
+rowNumber <- seq(1:length(tidy_speech_words))
+words.df <- data.frame(rowNumber, tidy_speech_words)
+names(words.df) <- c("rowNumber","word")
+
+```
+
+
+```{r}
+speech_sentiment_quanteda<- words.df %>% inner_join(get_sentiments("nrc"))
+```
+
+
+```{r}
+lang_word_counts <- words.df %>%
+  inner_join(get_sentiments("nrc")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+
+
+```
+ * #### This code breaks the words into different categories such as anger, anticipation, fear, and sadness.
+
+```{r}
+lang_word_counts %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 5) %>% 
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(x = "Contribution to sentiment",
+       y = NULL)
+
+```
+ * #### This code give a wordcloud of the major words that the president used in his address.
+
+```{r}
+library(reshape2)
+
+lang_word_counts %>%
+  inner_join(get_sentiments("nrc")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("blue", "green"),
+                   max.words = 100)
+```
+
+ * #### This code gives a wordcloud where the words are grouped as negative vs. positive.
+
+```{r}
+library(reshape2)
+
+lang_word_counts %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("blue", "green"),
+                   max.words = 500)
+```
+
+## Conlcusion:
+The sentimental analysis of Ukranian President Zelenski's address to congress seemed to be in line with the situation that he is dealing with. He has used words of anger but there are more words that represent anticipation from the US as well as the sadness of the situation in Ukraine. He is surprised by the invasion and the death as shown under the surprise bucket. He is fearful but also positive in the leadership of the US.
+I think this kind of sentimental analysis would be helpful for the members of congress and the White House in formulating the right policy towards Ukraine.
+
+
+
+## Reference:
+* https://towardsdatascience.com/a-guide-to-mining-and-analysing-tweets-with-r-2f56818fdd16
+* https://www.youtube.com/watch?v=engYXDjfQ18
+* https://www.youtube.com/watch?v=engYXDjfQ18&t=670s
+
