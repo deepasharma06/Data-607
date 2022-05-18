@@ -1,0 +1,254 @@
+---
+title: "Data607 Final project"
+author: "Deepa Sharma"
+date: "2022/05/09"
+output:
+ html_document: 
+    number_selections: true
+    toc: true
+    toc-depth: 3
+    theme: readable
+---
+
+
+
+## Part 1:
+### Introduction/Motivation:
+Russia's war on Ukraine has resulted in millions of people being displaced from their country. Most of them have entered Poland which is a neighboring country to Ukraine. I wanted to use the data available based on border crossing records in the Polish border to figure out which border crossing had the most number of refugees entering so that international aid agencies can plan resource allocation based on the needs in each area. Furthermore, I wanted to analyze which countries these refugees belonged to so that the governments of these countries can stand up against Russia's aggression.
+
+### Libraries loaded
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(stringr)
+library(ggplot2)
+library(dplyr)
+library(scales)
+library(usmap)
+```
+
+*Read analysis:*
+The data for this analysis was obtained from kaggle.com. The web link is https://www.kaggle.com/datasets/krystianadammolenda/refugees-from-ukraine-poland?resource=download. The data was first pulled into Github and then loaded to the R dataframe.
+
+```{r}
+df<- read.csv("https://raw.githubusercontent.com/deepasharma06/Data-607/main/border_traffic_UA_PL_01_03.csv")
+head(df)
+```
+
+## Part 2:
+### Data Wrangling:
+Below is the summary of the dataset.
+
+```{r}
+summary(df)
+```
+
+*I see in the summary above that the data headers are not stated properly so I ran the below code to make the column headers meaningful.*
+
+```{r}
+colnames(df) <- c("Border_Guard_Post", "Border_Crossing","Type_Of_Border_Crossing","Border_Guard_Unit","Date","Direction","Code","EU_Schengen","Number_Of_Persons_Checked_In","Number_Of_Persons_Evacuated")
+head(df)
+```
+
+
+```{r}
+str(df)
+```
+
+*I converted blank fields into NA so I can remove these rows.*
+
+```{r}
+df$Border_Crossing[df$Border_Crossing == ""] = NA
+
+cbind(lapply(lapply(df, is.na), sum))
+```
+
+*I wanted to keep my data clean by removing rows where a column is null. I see that my initial dataframe has 54233 rows but now with this command it has gone down to 54126 rows.So 107 rows were removed.*
+
+```{r}
+df1 <- na.omit(df) 
+
+cbind(lapply(lapply(df1, is.na), sum))
+```
+*The Date field is a character. I want to convert it into date fromat.*
+
+```{r}
+class(df1$Date)   
+```
+
+```{r}
+df1$Date <- as.Date(paste(df1$Date,"-01",sep=""))
+class(df1$Date)   
+```
+
+*In the dataframe, df1, there are two columns that tells me the number of persons who checked in themselves and those who were evacuated. I want to create a new column by adding these two columns which will give me the total arrivals*
+
+```{r}
+df1$Total_Arrival=rowSums(cbind(df1$Number_Of_Persons_Checked_In,df1$Number_Of_Persons_Evacuated),na.rm=TRUE,)
+str(df1)
+```
+
+*I separated the date column into Year, Month and Day. Note: This could will not run after the first run as the dataframe is not renamed.*
+
+```{r}
+df1 <- separate(df1, "Date", c("Year", "Month", "Day"), sep = "-")
+```
+
+
+```{r}
+summary(df1)
+```
+## Part 3:
+### Data Analysis:
+Number of people that arrived in Poland and departed from Poland
+
+```{r}
+arrive_in_poland <-arrive_in_poland <- df1 %>%
+  group_by(Direction) %>%
+  dplyr::summarise(Total_Arrival = sum(Total_Arrival)) %>%
+                     as.data.frame()
+
+arrive_in_poland
+```
+
+*The below code is used to determine the total number of people that arrived in Poland via road and via railways.*
+
+```{r}
+datagroup <- df1 %>%
+  group_by(Type_Of_Border_Crossing ) %>%
+  dplyr::summarise(Total = sum(Total_Arrival)) %>%
+                     as.data.frame()
+
+datagroup
+```
+
+*Below is a graph to show this data.*
+
+```{r}
+cvpalette<- c("#80bfff","#6666ff","#85adad")
+datagroup <- df1 %>%
+  group_by(Type_Of_Border_Crossing ) %>%
+  dplyr::summarise(Total = sum(Total_Arrival)) %>%
+                     as.data.frame()
+
+datagroup$Total <- as.numeric(datagroup$Total)
+ggplot(head(datagroup,4), aes(Type_Of_Border_Crossing  , Total, fill = Type_Of_Border_Crossing) ) +
+  geom_col() +
+  
+    scale_color_viridis_d()+
+   scale_fill_manual(values=cvpalette)+
+    theme(axis.text.x = element_text(angle = -30, vjust = 1, hjust = 0))+
+   labs(x="Type Of Border Crossing",y= "Total", title = "Border Crossing by Type")
+
+```
+
+
+*Total arrival in Poland based on country of citizenship*
+
+
+```{r}
+
+library(dplyr)
+Arrival_By_Citizenship <- df1 %>%
+  group_by(Code) %>%
+  dplyr::summarise(Total = sum(Total_Arrival)) %>%
+  arrange(Total, increasing = FALSE)
+
+  
+Arrival_By_Citizenship<-data.frame(Arrival_By_Citizenship)
+head(Arrival_By_Citizenship)
+
+## install.packages("writexl")
+## library(writexl)
+## write_xlsx(Arrival_By_Citizenship,"C:\\Users\\dkbs0\\OneDrive\\Desktop\\file_name.xlsx")
+
+```
+
+
+
+```{r}
+# read in states csv
+codeList<-read.csv("https://datahub.io/core/country-list/r/data.csv")
+head(codeList)
+str(codeList)
+##write_xlsx(codeList,"C:\\Users\\dkbs0\\OneDrive\\Desktop\\codeList.xlsx")
+##states<-read.csv(curl("https://raw.githubusercontent.com/brsingh7/DATA607/main/states.csv"))
+```
+
+
+```{r}
+mapdata<-map_data("world")
+head(mapdata)
+str(mapdata)
+```
+*Since the source data obtained from Kaggle was not in alignment with the map package data, I had to export the data into Excel and then namually work on the data and load it to GitHub to pull back into R.*
+
+```{r}
+df3 <- read.csv("https://raw.githubusercontent.com/deepasharma06/Data-607/main/ukraine_refugee.csv")
+colnames(df3) <- c("region", "Code","Total")
+head(df3)
+
+```
+
+
+```{r}
+mapdata1 <- read.csv("https://raw.githubusercontent.com/deepasharma06/Data-607/main/mapdata.csv")
+head(mapdata1)
+
+```
+
+*The below code is used to create a new dataframe for a plot of the top 10 countries that the Ukranian refugees were citizens of.*
+
+```{r}
+df4 <- df3 %>% top_n(10,Total)
+df4 <- df4 %>% select(-Code)
+df4 = df4[order(-df4$Total), ]
+head(df4)
+
+ggplot(df4, aes(region, log(Total), fill= region)) +
+  geom_bar(stat="identity") +
+  coord_flip() +
+  labs("region", "Total", subtitle = "Ukraine Refugee by Citizenship")
+
+```
+
+*Analysis of refugee count by border crossing*
+
+```{r}
+arrive_in_poland_by_border_crossing <-arrive_in_poland_by_border_crossing <- df1 %>%
+  group_by(Border_Guard_Post) %>%
+  dplyr::summarise(Total_Arrival = sum(Total_Arrival)) %>%
+                     as.data.frame()
+
+arrive_in_poland_by_border_crossing
+head(arrive_in_poland_by_border_crossing)
+```
+
+
+```{r}
+ggplot(arrive_in_poland_by_border_crossing, aes(Border_Guard_Post, Total_Arrival, fill= Border_Guard_Post)) +
+  geom_bar(stat="identity") +
+  coord_flip() +
+  labs("Border Guard Post", "Total Arrival", subtitle = "Ukraine Refugee by Border Crossing")
+
+```
+*Note: Horyniec-Zdroj does not show in the plot because the value is quite low compared to the other border crossings.*
+
+## Part 4:
+
+*Challenges: The below code is to plot the number of refugee leaving Ukraine to Poland in the world map by their citizenship. I found that the data set used for this analysis did not match well with the world map packages available in R. For example, the country code dis not match with an existing country code and  there was no way to figure out which country the data set was referring to because the country name was not available. Similarly, the border crossing names were laid out very loosely some of these locations were not available in the map data. So I had to manually update the data and load it into GitHub and then pull into R for the plot. Even in doing so, I did see that there are imperfections in the map and the layout and color code is not as expected.*
+
+
+```{r}
+map1<-ggplot(mapdata1,aes(x=long,y= lat, group = group))+
+  geom_polygon(aes(fill=Total), color = "black")
+  map1
+```
+
+## Part 5:
+*Conclusion: Based on the above analysis, I found that most of the refugees were coming into the Medyka border crossing followed by Kroscienko, Dorohusk, Hrebenne, Lubaczow, Hrubieszow and Dolhobyczow. The number of refugee was the least in Horyniec-Zdroj. This means that there is a concentration of refugee arrival in south eastern Poland which makes sense as Ukraine is under attack from the north side and people feeling the conflict are travelling towards Poland from as south of Ukraine as possible.*
+
+*International aid agencies can use the above analysis to make aid distribution decisions so that there is equity in such distributions based on need.*
+
+*Another interesting thing that came up in this analysis is that even Russian citizens in Ukraine who have been affected by the war in Ukraine have entered into Poland. One thing that I am interested to understand is whether these Russian citizens will eventually choose to enter Russia or seek refuge in a third country. Also, there is a question about how the Polish people and the international aid agencies are treating Russian refugee. I believe everyone effected by war need to be taken care of irrespective of their national origin. But there was no data to support that analysis at this time.*
